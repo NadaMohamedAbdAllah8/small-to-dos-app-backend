@@ -22,8 +22,7 @@ class TaskController extends Controller
     {
         return $this->respondWithJson(
             TaskResource::collection($this->taskService->getAll()),
-            'Tasks retrieved successfully.',
-            Response::HTTP_OK,
+            'Tasks retrieved successfully.'
         );
     }
 
@@ -42,8 +41,7 @@ class TaskController extends Controller
     {
         return $this->respondWithJson(
             new TaskResource($task),
-            'Task retrieved successfully.',
-            Response::HTTP_OK,
+            'Task retrieved successfully.'
         );
     }
 
@@ -53,8 +51,7 @@ class TaskController extends Controller
 
         return $this->respondWithJson(
             new TaskResource($task),
-            'Task updated successfully.',
-            Response::HTTP_OK,
+            'Task updated successfully.'
         );
     }
 
@@ -65,7 +62,7 @@ class TaskController extends Controller
         return $this->respondWithJson(
             null,
             'Task deleted successfully.',
-            Response::HTTP_OK,
+            Response::HTTP_NO_CONTENT,
         );
     }
 }

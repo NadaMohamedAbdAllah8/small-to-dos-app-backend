@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 trait RespondsWithJson
 {
@@ -17,7 +18,7 @@ trait RespondsWithJson
     protected function respondWithJson(
         mixed $data,
         string $message,
-        int $status,
+        int $status = Response::HTTP_OK,
     ): JsonResponse {
         return response()->json([
             'status' => $status,
