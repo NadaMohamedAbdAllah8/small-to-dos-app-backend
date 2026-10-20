@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 /*
@@ -14,7 +16,7 @@ use Tests\TestCase;
 */
 
 pest()->extend(TestCase::class)
- // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->use(LazilyRefreshDatabase::class, WithFaker::class)
     ->in('Feature');
 
 /*
