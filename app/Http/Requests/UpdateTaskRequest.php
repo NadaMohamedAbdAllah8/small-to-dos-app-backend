@@ -25,11 +25,11 @@ class UpdateTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
-            'priority' => ['sometimes', 'required', Rule::enum(TaskPriority::class)],
+            'priority' => ['sometimes', 'nullable', Rule::enum(TaskPriority::class)],
             'due_date' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
-            'is_completed' => ['sometimes', 'required', 'boolean'],
+            'is_completed' => ['sometimes', 'nullable', 'boolean'],
         ];
     }
 }
