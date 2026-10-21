@@ -65,7 +65,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return response()->json([
                 'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
-                'message' => 'Server error.',
+                'message' => 'An unexpected error occurred.',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         });
     })->create();
