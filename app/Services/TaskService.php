@@ -17,7 +17,7 @@ class TaskService
 
     public function create(array $taskData): Task
     {
-        return Task::query()->create($taskData);
+        return Task::query()->create($taskData)->refresh();
     }
 
     public function update(Task $task, array $taskData): Task
