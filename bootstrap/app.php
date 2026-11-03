@@ -1,6 +1,8 @@
 <?php
 
+use App\Exceptions\AuthenticationException as ApiAuthenticationException;
 use App\Exceptions\ModelNotFoundException as ApiModelNotFoundException;
+use Illuminate\Auth\AuthenticationException as LaravelAuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException as EloquentModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -32,6 +34,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request, Throwable $exception): bool => $request->is('api/*') || $request->expectsJson(),
         );
+
+        $exceptions->render(function (LaravelAuthenticationException $exception, Request $request): ?JsonResponse {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return (new ApiAuthenticationException(
+                message: $exception->getMessage(),
+                previous: $exception,
+            ))->render();
+        });
 
         $exceptions->render(function (ValidationException $exception, Request $request): ?JsonResponse {
             if (! $request->is('api/*')) {
