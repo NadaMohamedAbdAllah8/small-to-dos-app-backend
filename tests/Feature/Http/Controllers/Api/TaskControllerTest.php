@@ -5,7 +5,12 @@ use App\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Testing\Fluent\AssertableJson;
+use Laravel\Sanctum\Sanctum;
 use Symfony\Component\HttpFoundation\Response;
+
+beforeEach(function () {
+    Sanctum::actingAs(User::factory()->create(), ['*']);
+});
 
 describe('index', function () {
     it('returns an empty task collection', function () {
