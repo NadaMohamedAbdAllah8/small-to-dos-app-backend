@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Task;
 
 use App\Enums\TaskPriority;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateTaskRequest extends FormRequest
+class StoreTaskRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,11 +25,11 @@ class UpdateTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'description' => ['sometimes', 'nullable', 'string'],
-            'priority' => ['sometimes', 'nullable', Rule::enum(TaskPriority::class)],
-            'due_date' => ['sometimes', 'nullable', 'date_format:Y-m-d'],
-            'is_completed' => ['sometimes', 'nullable', 'boolean'],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'priority' => ['required', Rule::enum(TaskPriority::class)],
+            'due_date' => ['nullable', 'date_format:Y-m-d'],
+            'is_completed' => ['sometimes', 'required', 'boolean'],
         ];
     }
 }
