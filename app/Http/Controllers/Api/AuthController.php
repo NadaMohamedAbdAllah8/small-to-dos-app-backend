@@ -9,6 +9,7 @@ use App\Http\Resources\Auth\LoginResource;
 use App\Services\AuthService;
 use App\Traits\RespondsWithJson;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
@@ -25,6 +26,16 @@ class AuthController extends Controller
         return $this->respondWithJson(
             data: new LoginResource($data),
             message: 'Logged in successfully',
+        );
+    }
+
+    public function logout(Request $request): JsonResponse
+    {
+        $this->authService->logout($request->user());
+
+        return $this->respondWithJson(
+            data: null,
+            message: 'Logged out successfully',
         );
     }
 }

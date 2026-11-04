@@ -7,6 +7,7 @@ use App\Auth\LoginResponseDTO;
 use App\Exceptions\AuthenticationException;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthService
 {
@@ -27,5 +28,14 @@ class AuthService
             tokenType: 'Bearer',
             user: $user,
         );
+    }
+
+    public function logout(User $user): void
+    {
+        $accessToken = $user->currentAccessToken();
+
+        if ($accessToken instanceof PersonalAccessToken) {
+            $accessToken->delete();
+        }
     }
 }
