@@ -1,59 +1,260 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Small To-Dos API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel REST API for managing a shared task list. Users log in with email and password, receive a Laravel Sanctum bearer token, and use that token to access the task endpoints.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Sanctum bearer-token authentication
+- Login throttling at five attempts per minute for each email and IP combination
+- Create, read, update, and delete task endpoints
+- Task validation with consistent JSON error responses
+- SQLite configuration for local development
+- Pest feature and service tests
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Technology
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.3+
+- Laravel 13
+- Laravel Sanctum 4
+- SQLite
+- Pest 4
 
-## Learning Laravel
+## Local Setup
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Install PHP 8.3 or newer, Composer, and the PHP SQLite extension. Node.js is only required if you want to build the included frontend assets.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+From the project directory, install the PHP dependencies:
 
-## Laravel Sponsors
+```bash
+composer install
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Create the environment file. On macOS or Linux:
 
-### Premium Partners
+```bash
+cp .env.example .env
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+On Windows PowerShell:
 
-## Contributing
+```powershell
+Copy-Item .env.example .env
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Create the SQLite database if it does not already exist, generate the application key, and migrate the database:
 
-## Code of Conduct
+```bash
+php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');"
+php artisan key:generate
+php artisan migrate --seed
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+The seeder creates three example tasks and this local account:
 
-## Security Vulnerabilities
+| Field | Value |
+| --- | --- |
+| Email | `test@example.com` |
+| Password | `password` |
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Start the API on the port configured by `.env.example`:
+
+```bash
+php artisan serve --host=127.0.0.1 --port=8081
+```
+
+The API base URL is `http://127.0.0.1:8081/api`.
+
+To install and build the optional frontend assets:
+
+```bash
+npm install
+npm run build
+```
+
+## Authentication
+
+Send the seeded credentials to the login endpoint:
+
+```bash
+curl --request POST http://127.0.0.1:8081/api/login \
+    --header "Accept: application/json" \
+    --header "Content-Type: application/json" \
+    --data '{"email":"test@example.com","password":"password"}'
+```
+
+A successful login returns a new non-expiring Sanctum token:
+
+```json
+{
+  "status": 200,
+  "message": "Logged in successfully",
+  "data": {
+    "token": "1|plain-text-token",
+    "token_type": "Bearer",
+    "user": {
+      "id": 1,
+      "name": "Test User",
+      "email": "test@example.com"
+    }
+  }
+}
+```
+
+Pass the token to every task request:
+
+```text
+Authorization: Bearer 1|plain-text-token
+```
+
+Log out by sending the current bearer token to the logout endpoint:
+
+```bash
+curl --request POST http://127.0.0.1:8081/api/logout \
+    --header "Accept: application/json" \
+    --header "Authorization: Bearer 1|plain-text-token"
+```
+
+Logout revokes only the token used for that request. Other tokens issued to the same user remain valid. There is currently no registration endpoint, and authenticated users access the same shared task collection.
+
+## API Endpoints
+
+| Method | Endpoint | Authentication | Description |
+| --- | --- | --- | --- |
+| `POST` | `/api/login` | No | Validate credentials and issue a token |
+| `POST` | `/api/logout` | Bearer token | Revoke the current token |
+| `GET` | `/api/tasks` | Bearer token | List tasks, newest first |
+| `POST` | `/api/tasks` | Bearer token | Create a task |
+| `GET` | `/api/tasks/{task}` | Bearer token | Retrieve a task |
+| `PUT/PATCH` | `/api/tasks/{task}` | Bearer token | Update supplied task fields |
+| `DELETE` | `/api/tasks/{task}` | Bearer token | Delete a task |
+
+### Task Fields
+
+| Field | Create | Update | Rules |
+| --- | --- | --- | --- |
+| `title` | Required | Optional | String, maximum 255 characters; cannot be null when supplied |
+| `description` | Optional | Optional | Nullable string |
+| `priority` | Required | Optional | `low`, `medium`, or `high`; cannot be null when supplied |
+| `due_date` | Optional | Optional | Nullable date in `YYYY-MM-DD` format |
+| `is_completed` | Optional | Optional | Boolean; defaults to `false` and cannot be null when supplied |
+
+### Create a Task
+
+```bash
+curl --request POST http://127.0.0.1:8081/api/tasks \
+    --header "Accept: application/json" \
+    --header "Authorization: Bearer 1|plain-text-token" \
+    --header "Content-Type: application/json" \
+    --data '{
+      "title": "Review the API documentation",
+      "description": "Check the authentication examples",
+      "priority": "high",
+      "due_date": "2026-11-10",
+      "is_completed": false
+    }'
+```
+
+### List Tasks
+
+```bash
+curl http://127.0.0.1:8081/api/tasks \
+    --header "Accept: application/json" \
+    --header "Authorization: Bearer 1|plain-text-token"
+```
+
+### Update a Task
+
+```bash
+curl --request PATCH http://127.0.0.1:8081/api/tasks/1 \
+    --header "Accept: application/json" \
+    --header "Authorization: Bearer 1|plain-text-token" \
+    --header "Content-Type: application/json" \
+    --data '{"is_completed":true}'
+```
+
+### Delete a Task
+
+```bash
+curl --request DELETE http://127.0.0.1:8081/api/tasks/1 \
+    --header "Accept: application/json" \
+    --header "Authorization: Bearer 1|plain-text-token"
+```
+
+Successful deletion returns `204 No Content`.
+
+## Response Format
+
+Successful responses other than deletion use this envelope:
+
+```json
+{
+  "status": 200,
+  "message": "Tasks retrieved successfully.",
+  "data": []
+}
+```
+
+A task resource contains:
+
+```json
+{
+  "id": 1,
+  "title": "Review the task list",
+  "description": null,
+  "priority": "low",
+  "due_date": null,
+  "is_completed": false,
+  "created_at": "2026-11-03T17:00:00.000000Z",
+  "updated_at": "2026-11-03T17:00:00.000000Z"
+}
+```
+
+Errors use a status and message without a data field:
+
+```json
+{
+  "status": 401,
+  "message": "Unauthenticated."
+}
+```
+
+Common API status codes are:
+
+| Status | Meaning |
+| --- | --- |
+| `200` | Request succeeded |
+| `201` | Task created |
+| `204` | Task deleted; response has no body |
+| `401` | Credentials or bearer token are invalid |
+| `404` | Task was not found |
+| `422` | Request validation failed |
+| `429` | Login rate limit exceeded |
+| `500` | Unexpected server error |
+
+## CORS
+
+API requests are accepted from the origin configured by `FRONTEND_URL`. The default is `http://localhost:5173`. CORS preflight requests remain public, while task operations require a bearer token.
+
+## Testing and Code Style
+
+The test suite uses an in-memory SQLite database:
+
+```bash
+php artisan test --compact
+```
+
+Run a focused test file:
+
+```bash
+php artisan test --compact tests/Feature/Http/Controllers/Api/TaskAuthenticationTest.php
+```
+
+Format changed PHP files with Laravel Pint:
+
+```bash
+vendor/bin/pint --dirty --format agent
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

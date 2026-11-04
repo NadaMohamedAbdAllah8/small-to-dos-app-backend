@@ -8,5 +8,9 @@ Route::post('login', [AuthController::class, 'login'])
     ->middleware('throttle:login')
     ->name('login');
 
+Route::post('logout', [AuthController::class, 'logout'])
+    ->middleware('auth:sanctum')
+    ->name('logout');
+
 Route::apiResource('tasks', TaskController::class)
     ->middleware('auth:sanctum');
