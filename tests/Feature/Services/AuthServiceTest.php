@@ -46,3 +46,15 @@ it('rejects invalid credentials without creating a token', function (string $ema
     'unknown email' => ['unknown@example.com', 'correct-password'],
     'incorrect password' => ['known@example.com', 'incorrect-password'],
 ]);
+
+it('revokes only the current access token', function () {
+    $user = User::factory()->create();
+    $currentAccessToken = $user->createToken('current-token')->accessToken;
+    $otherAccessToken = $user->createToken('other-token')->accessToken;
+    $user->withAccessToken($currentAccessToken);
+
+    (new AuthService)->logout($user);
+
+    $this->assertModelMissing($currentAccessToken);
+    $this->assertModelExists($otherAccessToken);
+});

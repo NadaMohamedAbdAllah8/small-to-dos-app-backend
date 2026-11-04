@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\PersonalAccessToken;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -123,4 +124,52 @@ it('returns 429 after five login attempts for the same email and IP address', fu
         ->assertJsonPath('message', 'Too Many Requests.');
 
     expect(PersonalAccessToken::query()->count())->toBe(0);
+});
+
+it('returns 401 when no token is provided to logout', function () {
+    $this->postJson('/api/logout')
+        ->assertUnauthorized()
+        ->assertExactJson([
+            'status' => Response::HTTP_UNAUTHORIZED,
+            'message' => 'Unauthenticated.',
+        ]);
+});
+
+it('revokes only the bearer token used to logout', function () {
+    $password = $this->faker->password(12);
+    $user = User::factory()->create(['password' => $password]);
+    $credentials = [
+        'email' => $user->email,
+        'password' => $password,
+    ];
+
+    $firstToken = $this->postJson('/api/login', $credentials)
+        ->assertOk()
+        ->json('data.token');
+    $secondToken = $this->postJson('/api/login', $credentials)
+        ->assertOk()
+        ->json('data.token');
+    $firstAccessToken = PersonalAccessToken::findToken($firstToken);
+    $secondAccessToken = PersonalAccessToken::findToken($secondToken);
+
+    $this->withToken($firstToken)
+        ->postJson('/api/logout')
+        ->assertOk()
+        ->assertExactJson([
+            'status' => Response::HTTP_OK,
+            'message' => 'Logged out successfully',
+            'data' => null,
+        ]);
+
+    $this->assertModelMissing($firstAccessToken);
+    $this->assertModelExists($secondAccessToken);
+
+    Auth::forgetGuards();
+
+    $this->withToken($firstToken)
+        ->getJson('/api/tasks')
+        ->assertUnauthorized();
+    $this->withToken($secondToken)
+        ->getJson('/api/tasks')
+        ->assertOk();
 });
